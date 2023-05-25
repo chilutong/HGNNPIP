@@ -7,15 +7,21 @@ HGNNPIP Version: V1.0 Date: 2023-05-19 Platform: Pytorch 1.11.0 and Python 3.9.0
 
 [1] The folders in the HGNNPIP package:
 
-data: This folder contains nine benchmark datasets, including two PPI information files (positive and negative cases) and sequence information file.
-embeddings: This folder stores the embedding features generated in the training.
-OpenNE: This folder contains the node2vec method source code.
-SOTA: This folder contains 5 state-of-the-art algorithms.
+data: This folder contains nine benchmark datasets.
+SOTA: This folder contains 4 state-of-the-art algorithms.
+onlyGraph:This folder contains the model only use the PPI network information.
+onlySequence:This folder contains the model only use the Protein sequence information.
 [2] Scripts:
 
 The source code files of HGNNPIP model
 
 word2vec.py - This script is used to encode the protein sequences.
+
+DNN.py - This script is the sequence encoding model of the HGNNPIP.
+
+GNN.py - This script is the network embedding model of the HGNNPIP.
+
+layers.py- This script is the layer of the GNN model.
 
 utils.py - This script is used to prepare data and features for the model.
 
@@ -34,43 +40,43 @@ prediction.py - This script is used to predict the new PPI.
 The source code files for SOTA algorithms
 DeepFE.py – This script is to evaluate the performance of DeepFE-PPI. The complete source code can be downloaded from https://github.com/xal2019/DeepFE-PPI.
 
-DCONV.py- This script is to evaluate the performance of DCONV. The source code can be downloaded from https://gitlab.univnantes.fr/richoux-f/DeepPPI/tree/v1.tcbb.
+DeepTrio.py- This script is to evaluate the performance of DCONV. The source code can be downloaded from https://github.com/huxiaoti/deeptrio.git.
 
-DFC.py- This script is to evaluate the performance of DFC. The source code can be downloaded from https://gitlab.univnantes.fr/richoux-f/DeepPPI/tree/v1.tcbb.
+PIPR.py- This script is to evaluate the performance of DFC. The source code can be downloaded from https://github.com/muhaochen/seq_ppi.git.
 
-DeepPur(AAC).py- This script is to evaluate the performance of DeepPur(AAC). The code is downloaded from https://github.com/kexinhuang12345/DeepPurpose.
+GAT.py- This script is to evaluate the performance of DeepPur(AAC). The code is downloaded from https://github.com/Diego999/pyGAT.
 
-DeepPur(CNN).py- This script is to evaluate the performance of DeepPur(CNN). The code is downloaded from https://github.com/kexinhuang12345/DeepPurpose.
 
 [3] Datasets:
 
-(1) In this study, we provided seven testing datasets. The whole package of data can be downloaded from our official website: http://cdsic.njau.edu.cn/data/PPIDataBankV1.0.
+(1) In this study, we provided nine testing datasets. The whole package of data can be downloaded from our official website: http://cdsic.njau.edu.cn/data/PPIDataBankV1.0.
 
 (2) The data profiles for each dataset also can be downloaded from the folder ‘data’ in the Github.
 
 -------Sharing/access Information-------
 
-S.cerevisiae: PMID: 25657331
+S.cerevisiae: PMID: 20500905
 
-M.musculus: PMID: 34536380
+C.elegan: PMID: 20500905
 
+E.coli: PMID: 20500905
+
+D.melanogaster: PMID: 20500905
+
+Human: PMID:20698572
+
+Oryza: https://cn.string-db.org.
 H.pylori : PMID: 11196647
-
-D.melanogaster: PMID: 19171120
 
 Fly: PMID: 34536380
 
-Human: csbio.sjtu.edu.cn/bioinf/LR_PPI/Data.htm.
-
 [4] Running:
 
---Running the HGNNPIP model requires two edgelist files (one is for positive samples, and the other is for negative samples) and a csv file for the amino acid sequences of proteins.
+--To run the HGNNPIP model, you need to specify the dataset you want to train
 
 --Command line:
 
-run main.py script with --input1 --input2 --output --species --seed
-
---Model output: will generate a file called results.csv
+run 5cv.py script with --dataset
 
 --For example:
 
