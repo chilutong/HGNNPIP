@@ -42,58 +42,63 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
-
+# Train the model
 def train(epoch):
     t = time.time()
+
     gnn.train()
     mlp.train()
     dnn.train()
+    # Extract the sequence features by dnn
     seq_features1 = dnn(seq_features)
+    # Extract the topological features by gnn
     output = gnn(features, adj)
+    # Merge the sequence and topological features
     final_emb=torch.cat((seq_features1, output), dim=-1)
-
+    # Set the loss function
     loss_func = nn.BCELoss(size_average=False, reduce=True)
+    # predict by MLP classifier
     predictions = mlp(final_emb[net[idx_train][:, 0]],final_emb[net[idx_train][:, 1]])
 
+    # train
     optimizer.zero_grad()
     loss_train = loss_func(predictions.reshape(predictions.shape[0], ).to(torch.float32), labels[idx_train].to(torch.float32))
     acc_train = accuracy(predictions.reshape(predictions.shape[0], ), labels[idx_train],
                          args.threshold)
-
-    # test_pred=mlp(final_emb[net[idx_test][:, 0]],final_emb[net[idx_test][:, 1]])
-    # loss_test = loss_func(test_pred.reshape(test_pred.shape[0], ).to(torch.float32),
-    #                        labels[idx_test].to(torch.float32))
-    # acc_test=accuracy(test_pred.reshape(test_pred.shape[0], ), labels[idx_test],
-    #                      args.threshold)
     loss_train.backward()
     optimizer.step()
-
+    # Output the loss and acc of each epoch
     print('Epoch: {:04d}'.format(epoch),
           'loss_train: {:.4f}'.format(loss_train.data.item()),
           'acc_train: {:.4f}'.format(acc_train.data.item()),
-          # 'loss_test: {:.4f}'.format(loss_test.data.item()),
-          # 'acc_test: {:.4f}'.format(acc_test.data.item()),
           'time: {:.4f}s'.format(time.time() - t))
 
-    # return loss_test.data.item()
+
     return loss_train.data.item()
 
-
+# Test the model
 def compute_test():
     gnn.eval()
     mlp.eval()
     dnn.eval()
+    # Extract the sequence features by dnn
     seq_features1 = dnn(seq_features)
+    # Extract the topological features by gnn
     output = gnn(features, adj)
+    # Merge the sequence and topological features
     final_emb=torch.cat((seq_features1, output), dim=-1)
-
+    # predict by MLP classifier
     predictions = mlp(final_emb[net[idx_test][:, 0]],final_emb[net[idx_test][:, 1]])
+    # Set the loss function
     loss_func = nn.BCELoss(size_average=False, reduce=True)
+    # Test
     loss_test = loss_func(predictions.reshape(predictions.shape[0], ).to(torch.float32), labels[idx_test].to(torch.float32))
     acc_test = accuracy(predictions.reshape(predictions.shape[0], ), labels[idx_test],
                         args.threshold)
     precision, recall,spec, f1, mcc, roc, ap = metric(predictions.reshape(predictions.shape[0], ),
                                                  labels[idx_test], args.threshold)
+
+    # Output the result
     print("Test set results:",
           "loss= {:.4f}".format(loss_test.data.item()),
           "accuracy= {:.4f}".format(acc_test.data.item()),
@@ -108,7 +113,7 @@ def compute_test():
     return np.array([round(acc_test.data.item(), 3), round(precision, 3), round(recall, 3),round(spec, 3), round(f1, 3), round(mcc, 3),
                      round(roc, 3), round(ap, 3)])
 
-
+# The early stop function to avoid overfit
 def early_train():
     # Train model
     t_total = time.time()
@@ -155,17 +160,21 @@ def early_train():
     mlp.load_state_dict(torch.load('{}.mlp.pkl'.format(best_epoch)))
     dnn.load_state_dict(torch.load('{}.dnn.pkl'.format(best_epoch)))
 
-
+# Set the fold of Cross-Validation
 k = 5
 
 all_metric = np.zeros(8, dtype=float)
 all_acc = []
 metrics = []
 accuracys = []
+# Parse the PPI dataset
 idx_features,net_labels=parse_data(args.dataset,6,150)
+# Each fold of the Cross-Validation
 for i in range(k):
+    #Load the PPI dataset
     adj, features, seq_features,labels, idx_train, idx_test, net = load_data(i,idx_features,net_labels)
     print('第i折', i)
+    # Initial the gnn
     gnn = GNNmodel(nfeat=features.shape[1],
                 nproteins=features.shape[0],
                 nhid=args.hidden,
@@ -173,19 +182,21 @@ for i in range(k):
                 dropout=args.dropout,
                 nheads=args.nb_heads,
                 alpha=args.alpha)
+    # Initial the dnn
     layers=[seq_features.shape[1],512,256,128,64,32]
     dnn =DNNmodel(layers)
     num_proteins = adj.shape[0]
+    # Initial the mlp
     mlp_indim=args.outdim*2+32*2
     mlp_outdim=16
     layers = []
     temp=mlp_indim
     layers.append(temp)
-
     while temp>mlp_outdim :
         temp=temp/2
         layers.append(int(temp))
     mlp = MLPmodel(layers)
+    # Set the optimizer
     optimizer = torch.optim.Adam([{'params': gnn.parameters(), 'weight_decay': args.weight_decay},
                                    {'params': mlp.parameters(),'weight_decay': args.weight_decay},
                                  {'params': dnn.parameters(),'weight_decay': args.weight_decay}],
@@ -212,7 +223,7 @@ for i in range(k):
     mean_metric = all_metric / 5
     metrics.append(res)
 
-
+# output the result
 print(all_metric)
 print(metrics)
 print(mean_metric)

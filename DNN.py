@@ -9,8 +9,7 @@ class DNNmodel(nn.Module):
 
         self.dropout = 0.5
 
-
-        # 全连接网络
+        # fully connected network
         self.dnn_network = nn.ModuleList()
         self.bn_start = nn.BatchNorm1d(layers[0])
         self.leakyrelu = nn.LeakyReLU(0.2)
@@ -32,7 +31,8 @@ class DNNmodel(nn.Module):
 
     def forward(self, x):
         x = F.dropout(x, self.dropout, training=self.training)
-        # 全连接网络
+
+        # Feedforward process
         for linear in self.dnn_network:
 
             if type(linear) == type(nn.Linear(2, 1)):
