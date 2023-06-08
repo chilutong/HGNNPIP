@@ -27,6 +27,8 @@ utils.py - This script is used to prepare data and features for the model.
 
 TuneHyparam.py - This script is used to optimal the hyperparam.
 
+Sample.py - This script is used to generate negative examples.
+
 5cv.py – This script is used to evaluate the performance of HNSPPI with MLP classifier.
 
 5cv_cls.py – This script is used to evaluate the performance of HNSPPI with other classifiers.
@@ -72,16 +74,38 @@ Fly: PMID: 34536380
 
 [4] Running:
 
---To run the HGNNPIP model, you need to specify the dataset you want to train
+#### Negative sampling
+In HGNNPIP, we propose an effective negative sampling method to construct a dataset. You can use Sample.py to obtain negative examples based on the collected PPI data, in order to better train the model.
++ Firstly, you need to prepare a PPI data file and place it in the dataset folder, just like "/dataset/S.cere/network" in the project directory.
++ Secondly , execute the command line with arguments in shell:
+```
+python Sample.py [--dataset]
+```
+for example:
+```buildoutcfg
+python Sample.py --S.cere
+```
+#### 5cv
+You can run the 5cv.py to train the HGNNPIP model and test the performance in five-fold Cross-Validation.We provide nine datasets, and you can choose one to train the model.You need to execute the command line with arguments in shell: 
+```
+python 5cv.py [--dataset]
+```
+for example:
+```buildoutcfg
+python 5cv.py --S.cere
+```
 
---Command line:
-
-run 5cv.py script with --dataset
-
---For example:
-
-python 5cv.py --dataset S.cere
-
+#### predict
+In HGNNPIP, we propose an effective negative sampling method to construct a dataset. You can use Sample.py to obtain negative examples based on the collected PPI data, in order to better train the model.
++ Firstly, you need to prepare a predict list and place it in the dataset folder, just like the "/dataset/predict/list" in the project directory.
++ Secondly , execute the command line with arguments in shell:
+```
+python prediction.py [--dataset] [--predictList]
+```
+for example:
+```buildoutcfg
+python prediction.py --Oryza --'/data/predict/prediclist.csv'
+```
 [5] Installation:
 
 git clone https://github.com/chilutong/HGNNPIP

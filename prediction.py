@@ -19,6 +19,8 @@ from GNN import GNNmodel
 
 # Training settings
 parser = argparse.ArgumentParser()
+parser.add_argument('--predictList',default='/data/predict/prediclist.csv', help='predictList.')
+parser.add_argument('--dataset', type=str, default='Oryza', help='the dataset')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--seed', type=int, default=20230101, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=1500, help='Number of epochs to train.')
@@ -41,7 +43,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, seq_features, labels, idx_train, idx_test, net, prelist = load_data()
+adj, features, seq_features, labels, idx_train, idx_test, net, prelist = load_data(dataset=args.dataset)
 
 # Model and optimizer
 
@@ -194,10 +196,15 @@ def ealy_train():
 
 
         #预测
-        dataset='./data/S.cere'
+        dataset = './data/'+args.dataset
+        predictPath = args.predictList
+        prelist = pd.read_csv(predictPath, sep=',', header=None).values
+        # dataset='./data/S.cere'
         idx2uniprot = np.loadtxt(dataset+'/uniprot', dtype='str')[:,1]
         predictions = mlp(final_emb[prelist[:, 0]], final_emb[prelist[:, 1]]).cpu().detach().numpy()
+
         list=prelist.cpu().detach().numpy()
+
         result = np.column_stack((list,idx2uniprot[list[:,0]],idx2uniprot[list[:,1]],predictions))
         # result = np.append(list, predictions, axis=1)
 
