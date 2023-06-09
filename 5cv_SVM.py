@@ -40,7 +40,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
-
+# Define the SVM Classifier
 class SVM(nn.Module):
     def __init__(self,n):
         super(SVM, self).__init__()
@@ -63,25 +63,27 @@ class SVM(nn.Module):
         return loss
 
 
-
+# Train the model
 def train(epoch):
     t = time.time()
     gnn.train()
     svm.train()
     dnn.train()
+    # Extract the sequence features by dnn
     seq_features1 = dnn(seq_features)
+    # Extract the topological features by gnn
     output = gnn(features, adj)
+    # Merge the sequence and topological features
     final_emb=torch.cat((seq_features1, output), dim=-1)
-
     predictions = svm(final_emb[net[idx_train][:, 0]], final_emb[net[idx_train][:, 1]])
+    # Set the loss function
     loss_train=svm.hinge_loss(predictions, labels[idx_train])
+    # Train
     optimizer.zero_grad()
-
-
     acc_train = accuracy(predictions[:,0], labels[idx_train],args.threshold)
     loss_train.backward()
     optimizer.step()
-
+    # Output the loss and acc of each epoch
     print('Epoch: {:04d}'.format(epoch),
           'loss_train: {:.4f}'.format(loss_train.data.item()),
           'acc_train: {:.4f}'.format(acc_train.data.item()),
@@ -91,7 +93,7 @@ def train(epoch):
 
     return loss_train.data.item()
 
-
+# Test the model
 def compute_test():
     gnn.eval()
     svm.eval()
@@ -120,7 +122,7 @@ def compute_test():
     return np.array([round(acc_test.data.item(), 3), round(precision, 3), round(recall, 3),round(spec, 3), round(f1, 3), round(mcc, 3),
                      round(roc, 3), round(ap, 3)])
 
-
+# The early stop function to avoid overfit
 def early_train():
     # Train model
     t_total = time.time()
@@ -167,16 +169,16 @@ def early_train():
     svm.load_state_dict(torch.load('{}.svm.pkl'.format(best_epoch)))
     dnn.load_state_dict(torch.load('{}.dnn.pkl'.format(best_epoch)))
 
-
+# Set the fold of Cross-Validation
 k = 5
 
 all_metric = np.zeros(8, dtype=float)
-# metrics=np.zeros(7,dtype=float)
 all_acc = []
 metrics = []
-
 accuracys = []
+# Parse the PPI dataset
 idx_features,net_labels=parse_data(6,150)
+# Each fold of the Cross-Validation
 for i in range(k):
     adj, features, seq_features,labels, idx_train, idx_test, net = load_data(i,idx_features,net_labels)
     print('第i折', i)

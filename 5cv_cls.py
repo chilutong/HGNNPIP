@@ -42,7 +42,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
-
+# Define Classifier
 def CreatClassifier(cls_name):
 
     if cls_name=='knn':
@@ -53,24 +53,29 @@ def CreatClassifier(cls_name):
         classifier=RandomForestClassifier(n_estimators=100,max_depth=10, random_state=0)
 
     return  classifier
+# Train the model
 def train(epoch):
     t = time.time()
     gnn.train()
     dnn.train()
+    # Extract the sequence features by dnn
     seq_features1 = dnn(seq_features)
+    # Extract the topological features by gnn
     output = gnn(features, adj)
+    # Merge the sequence and topological features
     final_emb=torch.cat((seq_features1, output), dim=-1)
-
+    # Set the loss function
     loss_func = nn.BCELoss(size_average=False, reduce=True)
+    # Calculate loss by dot product
     predictions=F.sigmoid(torch.sum(final_emb[net[idx_train][:, 0]]* final_emb[net[idx_train][:, 1]],dim=1))
+    # Train
     optimizer.zero_grad()
-
     loss_train = loss_func(predictions.reshape(predictions.shape[0], ).to(torch.float32), labels[idx_train].to(torch.float32))
     acc_train = accuracy(predictions.reshape(predictions.shape[0], ), labels[idx_train],
                          args.threshold)
     loss_train.backward()
     optimizer.step()
-
+    # Output the loss and acc of each epoch
     print('Epoch: {:04d}'.format(epoch),
           'loss_train: {:.4f}'.format(loss_train.data.item()),
           'acc_train: {:.4f}'.format(acc_train.data.item()),
@@ -80,7 +85,7 @@ def train(epoch):
 
     return loss_train.data.item()
 
-
+# Test the model
 def compute_test():
     gnn.eval()
     dnn.eval()
@@ -91,7 +96,7 @@ def compute_test():
 
     classifier_input_train = np.column_stack((final_emb[net[idx_train][:, 0]].cpu().detach().numpy(),final_emb[net[idx_train][:, 1]].cpu().detach().numpy()))
     classifier_input_test = np.column_stack((final_emb[net[idx_test][:, 0]].cpu().detach().numpy(),final_emb[net[idx_test][:, 1]].cpu().detach().numpy()))
-
+    # Select the classifier eg.Random Forest
     classifier = CreatClassifier('RF')
     classifier.fit(classifier_input_train, labels[idx_train].cpu().detach().numpy())
     classifier_output=classifier.predict_proba(classifier_input_test)[:,1]
@@ -117,7 +122,7 @@ def compute_test():
     return np.array([round(acc_test.data.item(), 3), round(precision, 3), round(recall, 3),round(spec, 3), round(f1, 3), round(mcc, 3),
                      round(roc, 3), round(ap, 3)])
 
-
+# The early stop function to avoid overfit
 def early_train():
     # Train model
     t_total = time.time()
@@ -164,16 +169,16 @@ def early_train():
 
     dnn.load_state_dict(torch.load('{}.dnn.pkl'.format(best_epoch)))
 
-
+# Set the fold of Cross-Validation
 k = 5
 
 all_metric = np.zeros(8, dtype=float)
-
 all_acc = []
 metrics = []
-
 accuracys = []
+# Parse the PPI dataset
 idx_features,net_labels=parse_data(6,150)
+# Each fold of the Cross-Validation
 for i in range(k):
     adj, features, seq_features,labels, idx_train, idx_test, net = load_data(i,idx_features,net_labels)
     print('第i折', i)

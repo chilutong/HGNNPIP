@@ -40,7 +40,7 @@ torch.manual_seed(args.seed)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
-
+# Define the LR Classifier
 class LogisticRegression(nn.Module):
     def __init__(self, input_size):
         super(LogisticRegression, self).__init__()
@@ -51,27 +51,30 @@ class LogisticRegression(nn.Module):
         out = self.linear(x)  # 计算线性输出
         out = torch.sigmoid(out)  # 应用sigmoid函数得到概率输出
         return out
-
+# Train the model
 def train(epoch):
     t = time.time()
     gnn.train()
     lgs.train()
     dnn.train()
+    # Extract the sequence features by dnn
     seq_features1 = dnn(seq_features)
+    # Extract the topological features by gnn
     output = gnn(features, adj)
+    # Merge the sequence and topological features
     final_emb=torch.cat((seq_features1, output), dim=-1)
-
+    # Set the loss function
     loss_func = nn.BCELoss(size_average=False, reduce=True)
+    # Calculate loss
     predictions = lgs(final_emb[net[idx_train][:, 0]],final_emb[net[idx_train][:, 1]])
-
+    # Train
     optimizer.zero_grad()
-
     loss_train = loss_func(predictions.reshape(predictions.shape[0], ).to(torch.float32), labels[idx_train].to(torch.float32))
     acc_train = accuracy(predictions.reshape(predictions.shape[0], ), labels[idx_train],
                          args.threshold)
     loss_train.backward()
     optimizer.step()
-
+    # Output the loss and acc of each epoch
     print('Epoch: {:04d}'.format(epoch),
           'loss_train: {:.4f}'.format(loss_train.data.item()),
           'acc_train: {:.4f}'.format(acc_train.data.item()),
@@ -81,7 +84,7 @@ def train(epoch):
     # return loss_val.data.item()
     return loss_train.data.item()
 
-
+# Test the model
 def compute_test():
     gnn.eval()
     lgs.eval()
@@ -112,7 +115,7 @@ def compute_test():
     return np.array([round(acc_test.data.item(), 3), round(precision, 3), round(recall, 3),round(spec, 3), round(f1, 3), round(mcc, 3),
                      round(roc, 3), round(ap, 3)])
 
-
+# The early stop function to avoid overfit
 def early_train():
     # Train model
     t_total = time.time()
@@ -159,16 +162,16 @@ def early_train():
     lgs.load_state_dict(torch.load('{}.lgs.pkl'.format(best_epoch)))
     dnn.load_state_dict(torch.load('{}.dnn.pkl'.format(best_epoch)))
 
-
+# Set the fold of Cross-Validation
 k = 5
 
 all_metric = np.zeros(8, dtype=float)
-
 all_acc = []
 metrics = []
-
 accuracys = []
+# Parse the PPI dataset
 idx_features,net_labels=parse_data(6,150)
+# Each fold of the Cross-Validation
 for i in range(k):
     adj, features, seq_features,labels, idx_train, idx_test, net = load_data(i,idx_features,net_labels)
     print('第i折', i)
