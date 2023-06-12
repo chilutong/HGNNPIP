@@ -47,22 +47,20 @@ class AttentionLayer(nn.Module):
 
         zero_vec1 = -9e15 * torch.ones_like(e1)
         zero_vec2 = -9e15 * torch.ones_like(e2)
-        # zero1 = torch.zeros_like(e)
-        # e_abs = torch.abs(e)
-        # ones = torch.ones_like(e)
-        # e = torch.where(e_abs > 1, e, zero1)
+        # compute the 1-hop attention
         attention = torch.where(adj > 0, e1, zero_vec1)
-
         attention = F.softmax(attention, dim=1)
-
         attention = F.dropout(attention, self.dropout, training=self.training)
+        #compute the 1-hop features
         h_prime = torch.matmul(attention, Wh1)
         # h_prime = self.bn1(h_prime)
+        #compute the 2-hop attention
         attention2 = torch.where(adj_2hop > 0, e2, zero_vec2)
         attention2 = F.softmax(attention2, dim=1)
         attention2 = F.dropout(attention2, self.dropout, training=self.training)
+        #compute the 2-hop features
         h_prime2 = torch.matmul(attention2, Wh2)
-
+        # merge the 1-hop and 2-hop futures
         h_prime = torch.cat([h_prime, h_prime2], dim=-1)
         h_prime = self.bn2(h_prime)
         if self.concat:
@@ -71,10 +69,6 @@ class AttentionLayer(nn.Module):
             return h_prime
 
     def _prepare_attentional_mechanism_input(self, Wh):
-        # Wh.shape (N, out_feature)
-        # self.a.shape (2 * out_feature, 1)
-        # Wh1&2.shape (N, 1)
-        # e.shape (N, N)
 
         Wh1 = torch.matmul(Wh, self.a[:self.out_features, :])
         Wh2 = torch.matmul(Wh, self.a[self.out_features:, :])
@@ -84,33 +78,4 @@ class AttentionLayer(nn.Module):
 
     def __repr__(self):
         return self.__class__.__name__ + ' (' + str(self.in_features) + ' -> ' + str(self.out_features) + ')'
-
-
-class SpecialSpmmFunction(torch.autograd.Function):
-    """Special function for only sparse region backpropataion layer."""
-
-    @staticmethod
-    def forward(ctx, indices, values, shape, b):
-        assert indices.requires_grad == False
-        a = torch.sparse_coo_tensor(indices, values, shape)
-        ctx.save_for_backward(a, b)
-        ctx.N = shape[0]
-        return torch.matmul(a, b)
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        a, b = ctx.saved_tensors
-        grad_values = grad_b = None
-        if ctx.needs_input_grad[1]:
-            grad_a_dense = grad_output.matmul(b.t())
-            edge_idx = a._indices()[0, :] * ctx.N + a._indices()[1, :]
-            grad_values = grad_a_dense.view(-1)[edge_idx]
-        if ctx.needs_input_grad[3]:
-            grad_b = a.t().matmul(grad_output)
-        return None, grad_values, None, grad_b
-
-
-class SpecialSpmm(nn.Module):
-    def forward(self, indices, values, shape, b):
-        return SpecialSpmmFunction.apply(indices, values, shape, b)
 

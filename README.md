@@ -82,8 +82,8 @@ In HGNNPIP, we propose an effective negative sampling method to construct a data
 python Sample.py [--dataset]
 ```
 for example:
-```buildoutcfg
-python Sample.py --S.cere
+```
+python Sample.py --dataset=S.cere
 ```
 #### 5cv
 You can run the 5cv.py to train the HGNNPIP model and test the performance in five-fold Cross-Validation.We provide nine datasets, and you can choose one to train the model.You need to execute the command line with arguments in shell: 
@@ -91,8 +91,8 @@ You can run the 5cv.py to train the HGNNPIP model and test the performance in fi
 python 5cv.py [--dataset]
 ```
 for example:
-```buildoutcfg
-python 5cv.py --S.cere
+```
+python 5cv.py --dataset=S.cere
 ```
 
 #### predict
@@ -103,8 +103,8 @@ In HGNNPIP, we propose an effective negative sampling method to construct a data
 python prediction.py [--dataset] [--predictList]
 ```
 for example:
-```buildoutcfg
-python prediction.py --Oryza --'/data/predict/prediclist.csv'
+```
+python prediction.py --predictList=prediclist.csv --dataset=Oryza
 ```
 [5] Installation:
 

@@ -19,11 +19,11 @@ from GNN import GNNmodel
 
 # Training settings
 parser = argparse.ArgumentParser()
-parser.add_argument('--predictList',default='/data/predict/prediclist.csv', help='predictList.')
+parser.add_argument('--predictList',default='predictlist.csv', help='predictList.')
 parser.add_argument('--dataset', type=str, default='Oryza', help='the dataset')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='Disables CUDA training.')
 parser.add_argument('--seed', type=int, default=20230101, help='Random seed.')
-parser.add_argument('--epochs', type=int, default=1500, help='Number of epochs to train.')
+parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.005, help='Initial learning rate.')
 parser.add_argument('--weight_decay', type=float, default=5e-4, help='Weight decay (L2 loss on parameters).')
 parser.add_argument('--hidden', type=int, default=128, help='Number of hidden units.')
@@ -43,7 +43,7 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 # Load data
-adj, features, seq_features, labels, idx_train, idx_test, net, prelist = load_data(dataset=args.dataset)
+adj, features, seq_features, labels, idx_train, idx_test, net, prelist = load_data(dataset=args.dataset+'/')
 
 # Model and optimizer
 
@@ -68,7 +68,7 @@ layers.append(temp)
 while temp > mlp_outdim:
     temp = temp / 2
     layers.append(int(temp))
-mlp = MLPmodel(num_proteins, num_proteins, layers)
+mlp = MLPmodel(layers)
 
 optimizer = torch.optim.Adam([{'params': gnn.parameters(), 'weight_decay': args.weight_decay},
                               {'params': mlp.parameters(), 'weight_decay': args.weight_decay},
@@ -196,9 +196,10 @@ def ealy_train():
 
 
         #预测
-        dataset = './data/'+args.dataset
-        predictPath = args.predictList
+        dataset = './data/'+args.dataset+'/'
+        predictPath = dataset+args.predictList
         prelist = pd.read_csv(predictPath, sep=',', header=None).values
+        prelist = torch.LongTensor(prelist)
         # dataset='./data/S.cere'
         idx2uniprot = np.loadtxt(dataset+'/uniprot', dtype='str')[:,1]
         predictions = mlp(final_emb[prelist[:, 0]], final_emb[prelist[:, 1]]).cpu().detach().numpy()

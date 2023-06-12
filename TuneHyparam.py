@@ -8,12 +8,7 @@ from math import log
 import numpy as np
 
 from sklearn.model_selection import KFold, ShuffleSplit
-# from build_my_layer import MyMaskCompute, MySpatialDropout1D
-# from utility import random_arr, array_split
-# from input_preprocess import preprocess
-# import warnings
-# import argparse
-from train100 import test
+from TestForTnue import test
 
 # result = test(length=150,r_dim=3,dropout=0.5,lr=0.001,opti_switch=0)
 

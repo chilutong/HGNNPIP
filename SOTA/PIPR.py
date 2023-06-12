@@ -133,7 +133,7 @@ seq_tensor = np.array([seq2t.embed_normalized(line, seq_size) for line in tqdm(s
 seq_index1 = np.array([line[sid1_index] for line in tqdm(raw_data)])
 seq_index2 = np.array([line[sid2_index] for line in tqdm(raw_data)])
 
-# valid = np.loadtxt('../../../dataset/'+dataset+'/B_negative.tsv',dtype='str')
+# valid = np.loadtxt('../../../dataset/'+dataset+'/group2.tsv',dtype='str')
 # valid_a = []
 # valid_b =[]
 # for line in valid:

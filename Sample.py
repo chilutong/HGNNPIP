@@ -40,6 +40,6 @@ while i <k*l:
 
 # output
 net = pd.DataFrame(net)
-net.to_csv(dataset+'/Random_sample2',sep='\t',index=False,header=False)
+net.to_csv(dataset+'/re_network',sep='\t',index=False,header=False)
 
 

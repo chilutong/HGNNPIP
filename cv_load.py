@@ -7,22 +7,15 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score, classification_report, average_precision_score, precision_recall_curve, auc
 from sklearn.preprocessing import StandardScaler
 
-
-def encode_onehot(labels):
-    # The classes must be sorted before encoding to enable static class encoding.
-    # In other words, make sure the first class always maps to index 0.
-    classes = sorted(list(set(labels)))
-    classes_dict = {c: np.identity(len(classes))[i, :] for i, c in enumerate(classes)}
-    labels_onehot = np.array(list(map(classes_dict.get, labels)), dtype=np.int32)
-    return labels_onehot
-
-
 def parse_data(dataset,r_dim, length,path="./data/"):
 
     print('Loading {} dataset...'.format(dataset))
-    # word2vec.sequenceEmbedding(path + dataset, r_dim, length)
+    # Sequence vectorization
+    word2vec.sequenceEmbedding(path + dataset, r_dim, length)
+    # load the Sequence vector
     idx_features = pd.read_csv(path + dataset + '/word2vec_features.csv', header=None).values
-    net_labels = np.genfromtxt("{}{}/Random_sample2".format(path, dataset), dtype=np.int)
+    # load the PPI network
+    net_labels = np.genfromtxt("{}{}/re_network".format(path, dataset), dtype=np.int)
     # np.random.seed(20221231)
     np.random.shuffle(net_labels)
     return idx_features, net_labels
@@ -38,7 +31,7 @@ def load_data(i, idx_features, net_labels):
     idx_test = range(i * fold, (i + 1) * fold)
     idx_train = list(range(0, i * fold)) + list(range((i + 1) * fold, total))
     train = net_labels[idx_train]
-    # idx_train = torch.LongTensor(idx_train)
+
     # build graph
     idx = np.array(idx_features[:, 0], dtype=np.int32)
     idx_map = {j: i for i, j in enumerate(idx)}
@@ -51,7 +44,7 @@ def load_data(i, idx_features, net_labels):
 
     # build symmetric adjacency matrix
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
-
+    # get the degree feature
     degree = adj.todense().sum(axis=1)
     features = np.append(features, degree, axis=1)
     features = np.append(features, features, axis=1)
@@ -65,30 +58,17 @@ def load_data(i, idx_features, net_labels):
     seq_features = torch.FloatTensor(seq_features)
     labels = torch.tensor(labels)
     idx_train = torch.LongTensor(idx_train)
-    # idx_val = torch.LongTensor(idx_val)
     idx_test = torch.LongTensor(idx_test)
     net = torch.LongTensor(net)
     return adj, features, seq_features, labels, idx_train, idx_test, net
 
 
 def normalize_adj(mx):
-    """Row-normalize sparse matrix"""
     rowsum = np.array(mx.sum(1))
     r_inv_sqrt = np.power(rowsum, -0.5).flatten()
     r_inv_sqrt[np.isinf(r_inv_sqrt)] = 0.
     r_mat_inv_sqrt = sp.diags(r_inv_sqrt)
     return mx.dot(r_mat_inv_sqrt).transpose().dot(r_mat_inv_sqrt)
-
-
-def normalize_features(mx):
-    """Row-normalize sparse matrix"""
-    rowsum = np.array(mx.sum(1))
-    r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.
-    r_mat_inv = sp.diags(r_inv)
-    mx = r_mat_inv.dot(mx)
-    return mx
-
 
 def accuracy(output, labels, threshold):
     one = torch.ones_like(output)
@@ -98,7 +78,6 @@ def accuracy(output, labels, threshold):
     correct = preds.eq(labels)
     correct = correct.sum()
     return correct / len(labels)
-
 
 def metric(output, labels, threshold):
     one = torch.ones_like(output)

@@ -8,17 +8,19 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score, classification_report, average_precision_score, precision_recall_curve, auc
 from sklearn.preprocessing import StandardScaler
 
-def load_data(length=150, r_dim=6, path="./data", dataset="/S.cere/"):
+def load_data(length=150, r_dim=6, path="./data/", dataset="S.cere/"):
 
     print('Loading {} dataset...'.format(dataset))
-    # word2vec.sequenceEmbedding(path+dataset,r_dim,length)
+    # Sequence vectorization
+    word2vec.sequenceEmbedding(path+dataset,r_dim,length)
+    # load the Sequence vector
     idx_features = pd.read_csv(path + dataset + 'word2vec_features.csv', header=None).values
     uniprot = np.loadtxt(path + dataset + 'uniprot', dtype='str')
     features = idx_features[:, 1:]
-    prelist = pd.read_csv(path + dataset + 'B_negative', sep='\t', header=None).values
+    prelist = pd.read_csv(path + dataset + 'group2', sep='\t', header=None).values
     prelist = uniprot2id(prelist,uniprot)
-
-    net_labels = np.genfromtxt("{}{}Random_sample2".format(path, dataset), dtype=np.int)
+    # load the PPI network
+    net_labels = np.genfromtxt("{}{}re_network".format(path, dataset), dtype=np.int)
     np.random.seed()
     np.random.shuffle(net_labels)
     net = net_labels[:, :2]
@@ -36,6 +38,7 @@ def load_data(length=150, r_dim=6, path="./data", dataset="/S.cere/"):
 
     # build symmetric adjacency matrix
     adj = adj + adj.T.multiply(adj.T > adj) - adj.multiply(adj.T > adj)
+    # get the degree feature
     degree = adj.todense().sum(axis=1)
     features = np.append(features, degree, axis=1)
     features = np.append(features, features, axis=1)
@@ -43,7 +46,6 @@ def load_data(length=150, r_dim=6, path="./data", dataset="/S.cere/"):
     scaler = StandardScaler().fit(features)
     features = scaler.transform(features)
     seq_features = features[:, :-1]
-
     adj = torch.FloatTensor(np.array(adj.todense()))
     features = torch.FloatTensor(features)
     seq_features = torch.FloatTensor(seq_features)
@@ -62,17 +64,6 @@ def normalize_adj(mx):
     r_inv_sqrt[np.isinf(r_inv_sqrt)] = 0.
     r_mat_inv_sqrt = sp.diags(r_inv_sqrt)
     return mx.dot(r_mat_inv_sqrt).transpose().dot(r_mat_inv_sqrt)
-
-
-def normalize_features(mx):
-    """Row-normalize sparse matrix"""
-    rowsum = np.array(mx.sum(1))
-    r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.
-    r_mat_inv = sp.diags(r_inv)
-    mx = r_mat_inv.dot(mx)
-    return mx
-
 
 def accuracy(output, labels, threshold):
     one = torch.ones_like(output)
