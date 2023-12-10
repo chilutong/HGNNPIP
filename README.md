@@ -57,24 +57,22 @@ GAT.py- This script is to evaluate the performance of DeepPur(AAC). The code is 
 
 -------Sharing/access Information-------
 
-S.cerevisiae: PMID: 20500905
+S. cerevisiae: PMID: 20500905
 
-C.elegan: PMID: 20500905
+C. elegans: PMID: 20500905
 
-E.coli: PMID: 20500905
+E. coli: PMID: 20500905
 
-D.melanogaster: PMID: 20500905
+D. melanogaster: PMID: 20500905
 
 Human: PMID:20698572
 
-Oryza: https://cn.string-db.org.
-H.pylori : PMID: 11196647
+O. sativa: https://cn.string-db.org.
 
-Fly: PMID: 34536380
 
 [4] Running:
 
-#### Negative sampling
+#### Negative instance generation
 In HGNNPIP, we propose an effective negative sampling method to construct a dataset. You can use Sample.py to obtain negative examples based on the collected PPI data, in order to better train the model.
 + Firstly, you need to prepare a PPI data file and place it in the dataset folder, just like "/dataset/S.cere/network" in the project directory.
 + Secondly , execute the command line with arguments in shell:
@@ -85,7 +83,7 @@ for example:
 ```
 python Sample.py --dataset=S.cere
 ```
-#### 5cv
+#### 5cv(5-fold cross-validation)
 You can run the 5cv.py to train the HGNNPIP model and test the performance in five-fold Cross-Validation.We provide nine datasets, and you can choose one to train the model.You need to execute the command line with arguments in shell: 
 ```
 python 5cv.py [--dataset]
@@ -95,7 +93,7 @@ for example:
 python 5cv.py --dataset=S.cere
 ```
 
-#### predict
+#### PPI prediction
 In HGNNPIP, we propose an effective negative sampling method to construct a dataset. You can use Sample.py to obtain negative examples based on the collected PPI data, in order to better train the model.
 + Firstly, you need to prepare a predict list and place it in the dataset folder, just like the "/dataset/predict/list" in the project directory.
 + Secondly , execute the command line with arguments in shell:
